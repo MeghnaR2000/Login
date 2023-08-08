@@ -1,25 +1,94 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Navbar from './components/common/Navbar'
+import Register from './pages/Register'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import { check_token } from "./redux/LoginSlice";
+import Student from './pages/Student';
+import AddStudent from './pages/AddStudent'
+import Edit from './pages/Edit'
 
-function App() {
+
+const App = () => {
+  const dispatch=useDispatch();
+  const ProtectedRoute = ({ children }) => {
+    const token=localStorage.getItem('token');
+    return (token !== '' && token !== null && token !== undefined)?
+    <>
+      {children}
+    </>:
+    <>
+    <Navigate to='/login'/>
+    </>
+  }
+
+  const publicRoute = [
+    {
+      path: '/login',
+      component: <Login />
+    },
+    {
+      path: '/register',
+      component: <Register />
+    }
+  ];
+  const privateRoutes = [
+    {
+      path: '/',
+      component:<Home/>
+    },
+    {
+      path:'/student',
+      component:<Student/>
+    },
+    {
+      path:'/addStudent',
+      component:<AddStudent/>
+    },
+    {
+      path:'/edit/:id',
+      component:<Edit/>
+    },
+  ]
+  useEffect(()=>{
+    dispatch(check_token())
+  },[dispatch])
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <>
+      <ToastContainer />
+      <BrowserRouter>
+        <Navbar />
+        <Routes>
+          {
+            publicRoute?.map((route, index) => {
+              return (<>
+                <Route
+                  key={index?.id}
+                  exact path={route?.path}
+                  element={route?.component}
+                />
+              </>)
+            })
+          }
+          {
+            privateRoutes?.map((route, index) => {
+              return (<>
+                <Route
+                  key={index?.id}
+                  exact path={route?.path}
+                  element={(<ProtectedRoute>{route?.component}</ProtectedRoute>)}
+                />
+              </>)
+            })
+          }
+        </Routes>
+      </BrowserRouter>
+    </>
+  )
 }
 
-export default App;
+export default App
